@@ -6,9 +6,20 @@ provider:
   region: ap-southeast-1
 
 plugins:
-  - serverless-dynamodb-local
+  - serverless-dynamodb
   - serverless-offline  
-  
+
+custom:
+  dynamodb:
+    stages:
+      - dev
+    start:
+      port: 8000
+      inMemory: true
+      migrate: true
+      seed: true 
+    noStart: false 
+    
 functions:
   hello:
     handler: src/index.hello
@@ -16,3 +27,61 @@ functions:
       - http:
           path: hello
           method: get
+
+resources:
+  Resources:
+    # Users Table
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: UsersTable
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+    # Donations Table
+    DonationsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: DonationsTable
+        AttributeDefinitions:
+          - AttributeName: donationId
+            AttributeType: S
+          - AttributeName: donorId
+            AttributeType: S
+          - AttributeName: volunteerId
+            AttributeType: S
+          - AttributeName: status
+            AttributeType: S
+        KeySchema:
+          - AttributeName: donationId
+            KeyType: HASH
+        # GSI for donor_id, volunteer_id, and status
+        GlobalSecondaryIndexes:
+          - IndexName: DonorIndex
+            KeySchema:
+              - AttributeName: donorId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: VolunteerIndex
+            KeySchema:
+              - AttributeName: volunteerId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: StatusIndex
+            KeySchema:
+              - AttributeName: status
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        # TTL for Expiry
+        TimeToLiveSpecification:
+          AttributeName: expiryAt
+          Enabled: true
+        BillingMode: PAY_PER_REQUEST
