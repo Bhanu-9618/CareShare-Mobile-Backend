@@ -4,6 +4,21 @@ provider:
   name: aws
   runtime: nodejs20.x
   region: ap-southeast-1
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - !GetAtt UsersTable.Arn
+            - !GetAtt DonationsTable.Arn
+            - !Sub "${DonationsTable.Arn}/index/*"
 
 plugins:
   - serverless-dynamodb
@@ -60,7 +75,6 @@ resources:
         KeySchema:
           - AttributeName: donationId
             KeyType: HASH
-        # GSI for donor_id, volunteer_id, and status
         GlobalSecondaryIndexes:
           - IndexName: DonorIndex
             KeySchema:
@@ -80,8 +94,32 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
-        # TTL for Expiry
         TimeToLiveSpecification:
           AttributeName: expiryAt
           Enabled: true
         BillingMode: PAY_PER_REQUEST
+
+    CognitoUserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: CareShareUserPool
+        UsernameAttributes: [email]
+        AutoVerifiedAttributes: [email]
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 8
+            RequireLowercase: true
+            RequireNumbers: true
+            RequireSymbols: true
+            RequireUppercase: true
+
+    CognitoUserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: CareShareClient
+        UserPoolId: !Ref CognitoUserPool
+        ExplicitAuthFlows:
+          - ALLOW_USER_PASSWORD_AUTH
+          - ALLOW_USER_SRP_AUTH
+          - ALLOW_REFRESH_TOKEN_AUTH
+        GenerateSecret: false
