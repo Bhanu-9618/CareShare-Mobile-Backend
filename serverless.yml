@@ -1,0 +1,18 @@
+service: careshare-backend
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: ap-southeast-1
+
+plugins:
+  - serverless-dynamodb-local
+  - serverless-offline  
+  
+functions:
+  hello:
+    handler: src/index.hello
+    events:
+      - http:
+          path: hello
+          method: get
