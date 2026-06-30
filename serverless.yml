@@ -4,6 +4,8 @@ provider:
   name: aws
   runtime: nodejs20.x
   region: ap-southeast-1
+  environment:
+    COGNITO_CLIENT_ID: !Ref CognitoUserPoolClient
   iam:
     role:
       statements:
@@ -36,12 +38,21 @@ custom:
     noStart: false 
     
 functions:
-  hello:
-    handler: src/index.hello
+  register:
+    handler: src/auth/register.register
     events:
       - http:
-          path: hello
-          method: get
+          path: api/auth/register
+          method: post
+          cors: true
+
+  login:
+    handler: src/auth/login.login
+    events:
+      - http:
+          path: api/auth/login
+          method: post
+          cors: true
 
 resources:
   Resources:
