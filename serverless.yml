@@ -1,6 +1,12 @@
 service: careshare-backend
 useDotenv: true
 
+package:
+  individually: true
+  patterns:
+    - '!node_modules/**'
+    - 'src/**'
+    
 provider:
   name: aws
   runtime: nodejs18.x
