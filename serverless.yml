@@ -6,13 +6,15 @@ package:
   patterns:
     - '!node_modules/**'
     - 'src/**'
-    
+    - 'package.json'
+
 provider:
   name: aws
   runtime: nodejs18.x
   region: ap-southeast-1
   environment:
     COGNITO_CLIENT_ID: !Ref CognitoUserPoolClient
+    USER_POOL_ID: !Ref CognitoUserPool
   iam:
     role:
       statements:
@@ -28,14 +30,11 @@ provider:
             - !GetAtt UsersTable.Arn
             - !GetAtt DonationsTable.Arn
             - !Sub "${DonationsTable.Arn}/index/*"
-  httpApi:
-    authorizers:
-      CognitoAuthorizer:
-        identitySource: $request.header.Authorization
-        issuerUrl: !Sub "https://cognito-idp.${AWS::Region}.amazonaws.com/${CognitoUserPool}"
-        audience:
-          - !Ref CognitoUserPoolClient
-
+        - Effect: Allow
+          Action:
+            - cognito-idp:AdminConfirmSignUp
+          Resource:
+            - !GetAtt CognitoUserPool.Arn
 plugins:
   - serverless-dynamodb
   - serverless-plugin-typescript
@@ -71,7 +70,6 @@ functions:
 
 resources:
   Resources:
-    # Users Table
     UsersTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -84,7 +82,6 @@ resources:
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
 
-    # Donations Table
     DonationsTable:
       Type: AWS::DynamoDB::Table
       Properties:
