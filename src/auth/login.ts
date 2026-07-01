@@ -5,6 +5,17 @@ const client = new CognitoIdentityProviderClient({ region: "ap-southeast-1" });
 export const login = async (event: any) => {
   const { email, password } = JSON.parse(event.body);
 
+  if (process.env.IS_OFFLINE) {
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        message: "Mock Login Successful",
+        token: "mock-jwt-token-123456789",
+        user: { email }
+      })
+    };
+  }
+  
   const params = {
     AuthFlow: "USER_PASSWORD_AUTH" as const,
     ClientId: process.env.COGNITO_CLIENT_ID!,

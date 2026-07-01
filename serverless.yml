@@ -1,11 +1,12 @@
 service: careshare-backend
+useDotenv: true
 
 provider:
   name: aws
-  runtime: nodejs20.x
+  runtime: nodejs18.x
   region: ap-southeast-1
   environment:
-    COGNITO_CLIENT_ID: !Ref CognitoUserPoolClient
+    COGNITO_CLIENT_ID: ${env:COGNITO_CLIENT_ID}
   iam:
     role:
       statements:
@@ -21,9 +22,17 @@ provider:
             - !GetAtt UsersTable.Arn
             - !GetAtt DonationsTable.Arn
             - !Sub "${DonationsTable.Arn}/index/*"
+  httpApi:
+    authorizers:
+      CognitoAuthorizer:
+        identitySource: $request.header.Authorization
+        issuerUrl: !Sub "https://cognito-idp.${AWS::Region}.amazonaws.com/${CognitoUserPool}"
+        audience:
+          - !Ref CognitoUserPoolClient
 
 plugins:
   - serverless-dynamodb
+  - serverless-plugin-typescript
   - serverless-offline  
 
 custom:
@@ -116,6 +125,13 @@ resources:
         UserPoolName: CareShareUserPool
         UsernameAttributes: [email]
         AutoVerifiedAttributes: [email]
+        Schema:
+          - Name: address
+            AttributeDataType: String
+            Mutable: true
+          - Name: role
+            AttributeDataType: String
+            Mutable: true
         Policies:
           PasswordPolicy:
             MinimumLength: 8

@@ -5,6 +5,17 @@ const client = new CognitoIdentityProviderClient({ region: "ap-southeast-1" });
 export const register = async (event: any) => {
   const { email, password, name, role, address } = JSON.parse(event.body);
 
+  if (process.env.IS_OFFLINE) {
+    return {
+      statusCode: 201,
+      body: JSON.stringify({
+        message: "Mock Register Successful",
+        token: "mock-jwt-token-123456789",
+        user: { email }
+      })
+    };
+  }
+
   const params = {
     ClientId: process.env.COGNITO_CLIENT_ID!,
     Username: email,
