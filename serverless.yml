@@ -6,7 +6,7 @@ provider:
   runtime: nodejs18.x
   region: ap-southeast-1
   environment:
-    COGNITO_CLIENT_ID: ${env:COGNITO_CLIENT_ID}
+    COGNITO_CLIENT_ID: !Ref CognitoUserPoolClient
   iam:
     role:
       statements:
