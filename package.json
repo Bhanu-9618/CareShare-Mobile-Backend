@@ -11,9 +11,14 @@
   "license": "ISC",
   "devDependencies": {
     "serverless": "^3.38.0",
-    "serverless-dynamodb-local": "^0.2.40",
-    "serverless-offline": "12.0.4", 
+    "serverless-dotenv-plugin": "^6.0.0",
+    "serverless-dynamodb": "^0.2.58",
+    "serverless-offline": "12.0.4",
+    "serverless-plugin-typescript": "^2.1.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.0.0"
-}
+  },
+  "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.1076.0"
+  }
 }

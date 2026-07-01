@@ -1,18 +1,152 @@
 service: careshare-backend
+useDotenv: true
 
 provider:
   name: aws
-  runtime: nodejs20.x
+  runtime: nodejs18.x
   region: ap-southeast-1
+  environment:
+    COGNITO_CLIENT_ID: ${env:COGNITO_CLIENT_ID}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - !GetAtt UsersTable.Arn
+            - !GetAtt DonationsTable.Arn
+            - !Sub "${DonationsTable.Arn}/index/*"
+  httpApi:
+    authorizers:
+      CognitoAuthorizer:
+        identitySource: $request.header.Authorization
+        issuerUrl: !Sub "https://cognito-idp.${AWS::Region}.amazonaws.com/${CognitoUserPool}"
+        audience:
+          - !Ref CognitoUserPoolClient
 
 plugins:
-  - serverless-dynamodb-local
+  - serverless-dynamodb
+  - serverless-plugin-typescript
   - serverless-offline  
-  
+
+custom:
+  dynamodb:
+    stages:
+      - dev
+    start:
+      port: 8000
+      inMemory: true
+      migrate: true
+      seed: true 
+    noStart: false 
+    
 functions:
-  hello:
-    handler: src/index.hello
+  register:
+    handler: src/auth/register.register
     events:
       - http:
-          path: hello
-          method: get
+          path: api/auth/register
+          method: post
+          cors: true
+
+  login:
+    handler: src/auth/login.login
+    events:
+      - http:
+          path: api/auth/login
+          method: post
+          cors: true
+
+resources:
+  Resources:
+    # Users Table
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: UsersTable
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+    # Donations Table
+    DonationsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: DonationsTable
+        AttributeDefinitions:
+          - AttributeName: donationId
+            AttributeType: S
+          - AttributeName: donorId
+            AttributeType: S
+          - AttributeName: volunteerId
+            AttributeType: S
+          - AttributeName: status
+            AttributeType: S
+        KeySchema:
+          - AttributeName: donationId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: DonorIndex
+            KeySchema:
+              - AttributeName: donorId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: VolunteerIndex
+            KeySchema:
+              - AttributeName: volunteerId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: StatusIndex
+            KeySchema:
+              - AttributeName: status
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        TimeToLiveSpecification:
+          AttributeName: expiryAt
+          Enabled: true
+        BillingMode: PAY_PER_REQUEST
+
+    CognitoUserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: CareShareUserPool
+        UsernameAttributes: [email]
+        AutoVerifiedAttributes: [email]
+        Schema:
+          - Name: address
+            AttributeDataType: String
+            Mutable: true
+          - Name: role
+            AttributeDataType: String
+            Mutable: true
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 8
+            RequireLowercase: true
+            RequireNumbers: true
+            RequireSymbols: true
+            RequireUppercase: true
+
+    CognitoUserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: CareShareClient
+        UserPoolId: !Ref CognitoUserPool
+        ExplicitAuthFlows:
+          - ALLOW_USER_PASSWORD_AUTH
+          - ALLOW_USER_SRP_AUTH
+          - ALLOW_REFRESH_TOKEN_AUTH
+        GenerateSecret: false
