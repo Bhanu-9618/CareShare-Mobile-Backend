@@ -80,6 +80,10 @@ functions:
           path: api/donor/donations
           method: post
           cors: true
+          authorizer:
+            name: cognitoAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt CognitoUserPool.Arn
   
   getActiveDonations:
     handler: src/donor/controller.getActiveDonations
@@ -88,6 +92,10 @@ functions:
           path: api/donor/donations/active
           method: get
           cors: true
+          authorizer:
+            name: cognitoAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt CognitoUserPool.Arn
 
   getDonationHistory:
     handler: src/donor/controller.getDonationHistory
@@ -95,7 +103,11 @@ functions:
       - http:
           path: api/donor/history
           method: get
-          cors: true       
+          cors: true
+          authorizer:
+            name: cognitoAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt CognitoUserPool.Arn       
 
 resources:
   Resources:
