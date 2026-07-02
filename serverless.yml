@@ -1,17 +1,11 @@
 service: careshare-backend
 useDotenv: true
 
-package:
-  individually: true
-  patterns:
-    - '!node_modules/**'
-    - 'src/**'
-    - 'package.json'
-
 provider:
   name: aws
   runtime: nodejs18.x
   region: ap-southeast-1
+  endpointType: REGIONAL
   environment:
     COGNITO_CLIENT_ID: !Ref CognitoUserPoolClient
     USER_POOL_ID: !Ref CognitoUserPool
@@ -29,18 +23,29 @@ provider:
           Resource:
             - !GetAtt UsersTable.Arn
             - !GetAtt DonationsTable.Arn
-            - !Sub "${DonationsTable.Arn}/index/*"
+            - !Sub "${DonationsTable.Arn}/index/DonorIndex"
         - Effect: Allow
           Action:
             - cognito-idp:AdminConfirmSignUp
           Resource:
             - !GetAtt CognitoUserPool.Arn
 plugins:
+  - serverless-esbuild
   - serverless-dynamodb
-  - serverless-plugin-typescript
   - serverless-offline  
 
 custom:
+  esbuild:
+    bundle: true
+    minify: false
+    sourcemap: true
+    exclude: ['aws-sdk']
+    target: 'node18'
+    platform: 'node'
+    concurrency: 10
+    define:
+      require.resolve: "undefined"
+
   dynamodb:
     stages:
       - dev
@@ -67,6 +72,30 @@ functions:
           path: api/auth/login
           method: post
           cors: true
+
+  createDonation:
+    handler: src/donor/controller.createDonation
+    events:
+      - http:
+          path: api/donor/donations
+          method: post
+          cors: true
+  
+  getActiveDonations:
+    handler: src/donor/controller.getActiveDonations
+    events:
+      - http:
+          path: api/donor/donations/active
+          method: get
+          cors: true
+
+  getDonationHistory:
+    handler: src/donor/controller.getDonationHistory
+    events:
+      - http:
+          path: api/donor/history
+          method: get
+          cors: true       
 
 resources:
   Resources:
