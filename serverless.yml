@@ -24,6 +24,8 @@ provider:
             - !GetAtt UsersTable.Arn
             - !GetAtt DonationsTable.Arn
             - !Sub "${DonationsTable.Arn}/index/DonorIndex"
+            - !Sub "${DonationsTable.Arn}/index/StatusIndex"
+            - !Sub "${DonationsTable.Arn}/index/VolunteerIndex"
         - Effect: Allow
           Action:
             - cognito-idp:AdminConfirmSignUp
@@ -108,6 +110,30 @@ functions:
             name: cognitoAuthorizer
             type: COGNITO_USER_POOLS
             arn: !GetAtt CognitoUserPool.Arn       
+
+  getVolunteerFeed:
+    handler: src/volunteer/controller.getVolunteerFeed
+    events:
+      - http:
+          path: api/volunteer/feed
+          method: get
+          cors: true
+          authorizer:
+            name: cognitoAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt CognitoUserPool.Arn
+
+  claimDonation:
+    handler: src/volunteer/controller.claimDonation
+    events:
+      - http:
+          path: api/volunteer/donations/{id}/claim
+          method: post
+          cors: true
+          authorizer:
+            name: cognitoAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt CognitoUserPool.Arn         
 
 resources:
   Resources:
