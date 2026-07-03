@@ -1,5 +1,5 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, QueryCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, QueryCommand, UpdateCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 
 const ddbClient = new DynamoDBClient({ region: "ap-southeast-1" });
 const docClient = DynamoDBDocumentClient.from(ddbClient);
@@ -116,4 +116,65 @@ export const getInventoryByVolunteer = async (volunteerId: string) => {
     };
     const result = await docClient.send(new QueryCommand(params));
     return result.Items;
+};
+
+export const confirmDonationRequestRecord = async (donationId: string, volunteerId: string, otp: string) => {
+    const params = {
+        TableName: TABLE_NAME,
+        Key: { donationId },
+        UpdateExpression: "SET generated_otp = :otp",
+        ConditionExpression: "volunteerId = :vid AND #status = :expectedStatus",
+        ExpressionAttributeNames: { "#status": "status" },
+        ExpressionAttributeValues: {
+            ":otp": otp,
+            ":vid": volunteerId,
+            ":expectedStatus": "REQUESTED"
+        },
+        ReturnValues: "ALL_NEW" as const
+    };
+    const result = await docClient.send(new UpdateCommand(params));
+    return result.Attributes;
+};
+
+export const getDonationById = async (donationId: string) => {
+    const params = {
+        TableName: TABLE_NAME,
+        Key: { donationId }
+    };
+    const result = await docClient.send(new GetCommand(params));
+    return result.Item;
+};
+
+export const completeDonationRecord = async (donationId: string, volunteerId: string) => {
+    const params = {
+        TableName: TABLE_NAME,
+        Key: { donationId },
+        UpdateExpression: "SET #status = :newStatus",
+        ConditionExpression: "volunteerId = :vid AND #status = :expectedStatus",
+        ExpressionAttributeNames: { "#status": "status" },
+        ExpressionAttributeValues: {
+            ":newStatus": "COMPLETED",
+            ":vid": volunteerId,
+            ":expectedStatus": "REQUESTED"
+        },
+        ReturnValues: "ALL_NEW" as const
+    };
+    const result = await docClient.send(new UpdateCommand(params));
+    return result.Attributes;
+};
+
+export const getHistoryByVolunteer = async (volunteerId: string) => {
+    const params = {
+        TableName: TABLE_NAME,
+        IndexName: "VolunteerIndex",
+        KeyConditionExpression: "volunteerId = :vid",
+        FilterExpression: "#status = :status",
+        ExpressionAttributeNames: { "#status": "status" },
+        ExpressionAttributeValues: {
+            ":vid": volunteerId,
+            ":status": "COMPLETED"
+        }
+    };
+    const result = await docClient.send(new QueryCommand(params));
+    return result.Items || [];
 };

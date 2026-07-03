@@ -231,7 +231,43 @@ functions:
             name: cognitoAuthorizer
             type: COGNITO_USER_POOLS
             arn: !GetAtt CognitoUserPool.Arn
+  
+  confirmRequest:
+    handler: src/volunteer/controller.confirmRequest
+    events:
+      - http:
+          path: api/volunteer/inventory/{id}/confirm-request
+          method: post
+          cors: true
+          authorizer:
+            name: cognitoAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt CognitoUserPool.Arn
 
+  deliverDonation:
+    handler: src/volunteer/controller.deliverDonation
+    events:
+      - http:
+          path: api/volunteer/inventory/{id}/deliver
+          method: post
+          cors: true
+          authorizer:
+            name: cognitoAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt CognitoUserPool.Arn
+
+  getVolunteerHistory:
+    handler: src/volunteer/controller.getVolunteerHistory
+    events:
+      - http:
+          path: api/volunteer/history
+          method: get
+          cors: true
+          authorizer:
+            name: cognitoAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt CognitoUserPool.Arn
+            
 resources:
   Resources:
     UsersTable:
