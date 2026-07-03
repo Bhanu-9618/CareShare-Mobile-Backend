@@ -26,6 +26,7 @@ provider:
             - !Sub "${DonationsTable.Arn}/index/DonorIndex"
             - !Sub "${DonationsTable.Arn}/index/StatusIndex"
             - !Sub "${DonationsTable.Arn}/index/VolunteerIndex"
+            - !Sub "${DonationsTable.Arn}/index/ReceiverIndex"
         - Effect: Allow
           Action:
             - cognito-idp:AdminConfirmSignUp
@@ -170,7 +171,67 @@ functions:
             name: cognitoAuthorizer
             type: COGNITO_USER_POOLS
             arn: !GetAtt CognitoUserPool.Arn
-            
+
+  getLiveFeed:
+    handler: src/receiver/controller.getLiveFeed
+    events:
+      - http:
+          path: api/receiver/live-feed
+          method: get
+          cors: true
+          authorizer:
+            name: cognitoAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt CognitoUserPool.Arn
+
+  requestDonation:
+    handler: src/receiver/controller.requestDonation
+    events:
+      - http:
+          path: api/receiver/donations/{id}/request
+          method: post
+          cors: true
+          authorizer:
+            name: cognitoAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt CognitoUserPool.Arn
+
+  getPendingRequests:
+    handler: src/receiver/controller.getPendingRequests
+    events:
+      - http:
+          path: api/receiver/requests/pending
+          method: get
+          cors: true
+          authorizer:
+            name: cognitoAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt CognitoUserPool.Arn
+
+  getReceiverHub:
+    handler: src/receiver/controller.getReceiverHub
+    events:
+      - http:
+          path: api/receiver/hub
+          method: get
+          cors: true
+          authorizer:
+            name: cognitoAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt CognitoUserPool.Arn
+
+  getReceiverHistory: 
+    handler: src/receiver/controller.getReceiverHistory
+    events:
+      - http:
+          path: api/receiver/history
+          method: get
+          cors: true
+          authorizer:
+            name: cognitoAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt CognitoUserPool.Arn
+
 resources:
   Resources:
     UsersTable:
@@ -198,6 +259,8 @@ resources:
             AttributeType: S
           - AttributeName: status
             AttributeType: S
+          - AttributeName: receiverId
+            AttributeType: S
         KeySchema:
           - AttributeName: donationId
             KeyType: HASH
@@ -220,6 +283,12 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
+          - IndexName: ReceiverIndex
+            KeySchema:
+              - AttributeName: receiverId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL 
         TimeToLiveSpecification:
           AttributeName: expiryAt
           Enabled: true
