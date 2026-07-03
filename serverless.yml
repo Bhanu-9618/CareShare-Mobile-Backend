@@ -135,6 +135,42 @@ functions:
             type: COGNITO_USER_POOLS
             arn: !GetAtt CognitoUserPool.Arn         
 
+  getOngoingTasks:
+    handler: src/volunteer/controller.getOngoingTasks
+    events:
+      - http:
+          path: api/volunteer/tasks/ongoing
+          method: get
+          cors: true
+          authorizer:
+            name: cognitoAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt CognitoUserPool.Arn
+
+  pickupDonation:
+    handler: src/volunteer/controller.pickupDonation
+    events:
+      - http:
+          path: api/volunteer/tasks/{id}/pickup
+          method: post
+          cors: true
+          authorizer:
+            name: cognitoAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt CognitoUserPool.Arn
+
+  getVolunteerInventory:
+    handler: src/volunteer/controller.getVolunteerInventory
+    events:
+      - http:
+          path: api/volunteer/inventory
+          method: get
+          cors: true
+          authorizer:
+            name: cognitoAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt CognitoUserPool.Arn
+            
 resources:
   Resources:
     UsersTable:

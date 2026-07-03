@@ -60,3 +60,60 @@ export const claimDonationRecord = async (donationId: string, volunteerId: strin
     const result = await docClient.send(new UpdateCommand(params));
     return result.Attributes;
 };
+
+export const getOngoingTasksByVolunteer = async (volunteerId: string) => {
+    const params = {
+        TableName: TABLE_NAME,
+        IndexName: "VolunteerIndex",
+        KeyConditionExpression: "volunteerId = :vid",
+        FilterExpression: "#status = :status",
+        ExpressionAttributeNames: {
+            "#status": "status"
+        },
+        ExpressionAttributeValues: {
+            ":vid": volunteerId,
+            ":status": "ACCEPTED"
+        }
+    };
+    const result = await docClient.send(new QueryCommand(params));
+    return result.Items;
+};
+
+export const pickupDonationRecord = async (donationId: string, volunteerId: string) => {
+    const params = {
+        TableName: TABLE_NAME,
+        Key: { donationId },
+        UpdateExpression: "SET #status = :newStatus",
+        ConditionExpression: "attribute_exists(donationId) AND volunteerId = :vid AND #status = :expectedStatus",
+        ExpressionAttributeNames: {
+            "#status": "status"
+        },
+        ExpressionAttributeValues: {
+            ":newStatus": "LIVE",
+            ":vid": volunteerId,
+            ":expectedStatus": "ACCEPTED"
+        },
+        ReturnValues: "ALL_NEW" as const
+    };
+    const result = await docClient.send(new UpdateCommand(params));
+    return result.Attributes;
+};
+
+export const getInventoryByVolunteer = async (volunteerId: string) => {
+    const params = {
+        TableName: TABLE_NAME,
+        IndexName: "VolunteerIndex",
+        KeyConditionExpression: "volunteerId = :vid",
+        FilterExpression: "#status IN (:status1, :status2)",
+        ExpressionAttributeNames: {
+            "#status": "status"
+        },
+        ExpressionAttributeValues: {
+            ":vid": volunteerId,
+            ":status1": "LIVE",
+            ":status2": "REQUESTED"
+        }
+    };
+    const result = await docClient.send(new QueryCommand(params));
+    return result.Items;
+};
