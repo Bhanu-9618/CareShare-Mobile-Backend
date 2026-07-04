@@ -10,6 +10,7 @@ import {
     completeDonationRecord,
     getHistoryByVolunteer   
 } from './service';
+import { attachImageUrls } from "../lib/imageProcessor";
 
 export const getVolunteerFeed = async (event: any) => {
     try {
@@ -17,7 +18,8 @@ export const getVolunteerFeed = async (event: any) => {
         if (!volunteerId) return { statusCode: 401, body: JSON.stringify({ message: 'Unauthorized' }) };
 
         const feed = await getActiveFeed();
-        return { statusCode: 200, body: JSON.stringify(feed) };
+        const feedWithImages = await attachImageUrls(feed || []);
+        return { statusCode: 200, body: JSON.stringify(feedWithImages) };
     } catch (error: any) {
         console.error("DEBUG ERROR:", error);
         return { statusCode: 500, body: JSON.stringify({ error: "Failed to fetch feed", details: error.message }) };
@@ -65,7 +67,8 @@ export const getOngoingTasks = async (event: any) => {
         if (!volunteerId) return { statusCode: 401, body: JSON.stringify({ message: 'Unauthorized' }) };
 
         const tasks = await getOngoingTasksByVolunteer(volunteerId);
-        return { statusCode: 200, body: JSON.stringify(tasks) };
+        const feedWithImages = await attachImageUrls(tasks || []);
+        return { statusCode: 200, body: JSON.stringify(feedWithImages) };
     } catch (error: any) {
         console.error("Error fetching ongoing tasks:", error);
         return { statusCode: 500, body: JSON.stringify({ error: "Failed to fetch ongoing tasks", details: error.message }) };
@@ -107,7 +110,8 @@ export const getVolunteerInventory = async (event: any) => {
         if (!volunteerId) return { statusCode: 401, body: JSON.stringify({ message: 'Unauthorized' }) };
 
         const inventory = await getInventoryByVolunteer(volunteerId);
-        return { statusCode: 200, body: JSON.stringify(inventory) };
+        const feedWithImages = await attachImageUrls(inventory || []);
+        return { statusCode: 200, body: JSON.stringify(feedWithImages) };
     } catch (error: any) {
         console.error("Error fetching inventory:", error);
         return { statusCode: 500, body: JSON.stringify({ error: "Failed to fetch inventory", details: error.message }) };
@@ -163,8 +167,8 @@ export const getVolunteerHistory = async (event: any) => {
     try {
         const volunteerId = event.requestContext?.authorizer?.claims?.sub;
         const history = await getHistoryByVolunteer(volunteerId);
-        
-        return { statusCode: 200, body: JSON.stringify(history) };
+        const historyWithImages = await attachImageUrls(history || []);
+        return { statusCode: 200, body: JSON.stringify(historyWithImages) };
     } catch (error: any) {
         return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
     }

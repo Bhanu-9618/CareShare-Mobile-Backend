@@ -1,9 +1,11 @@
 import { getLiveDonations, requestDonationRecord, getDonationsByReceiverAndStatus } from './service';
+import { attachImageUrls } from "../lib/imageProcessor";
 
 export const getLiveFeed = async () => {
     try {
         const feed = await getLiveDonations();
-        return { statusCode: 200, body: JSON.stringify(feed) };
+        const feedWithImages = await attachImageUrls(feed || []);
+        return { statusCode: 200, body: JSON.stringify(feedWithImages) };
     } catch (error: any) {
         return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
     }
@@ -30,10 +32,9 @@ export const getPendingRequests = async (event: any) => {
     try {
         const receiverId = event.requestContext?.authorizer?.claims?.sub;
         const allRequested = await getDonationsByReceiverAndStatus(receiverId, "REQUESTED");
-        
         const pending = allRequested.filter(item => !item.generated_otp);
-        
-        return { statusCode: 200, body: JSON.stringify(pending) };
+        const pendingWithImages = await attachImageUrls(pending || []);
+        return { statusCode: 200, body: JSON.stringify(pendingWithImages) };
     } catch (error: any) {
         return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
     }
@@ -45,8 +46,8 @@ export const getReceiverHub = async (event: any) => {
         const allRequested = await getDonationsByReceiverAndStatus(receiverId, "REQUESTED");
         
         const hubItems = allRequested.filter(item => item.generated_otp);
-        
-        return { statusCode: 200, body: JSON.stringify(hubItems) };
+        const feedWithImages = await attachImageUrls(hubItems || []);
+        return { statusCode: 200, body: JSON.stringify(feedWithImages) };
     } catch (error: any) {
         return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
     }
@@ -56,8 +57,8 @@ export const getReceiverHistory = async (event: any) => {
     try {
         const receiverId = event.requestContext?.authorizer?.claims?.sub;
         const history = await getDonationsByReceiverAndStatus(receiverId, "COMPLETED");
-        
-        return { statusCode: 200, body: JSON.stringify(history) };
+        const historyWithImages = await attachImageUrls(history || []);
+        return { statusCode: 200, body: JSON.stringify(historyWithImages) };
     } catch (error: any) {
         return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
     }

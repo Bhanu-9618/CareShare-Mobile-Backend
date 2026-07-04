@@ -6,9 +6,11 @@ provider:
   runtime: nodejs18.x
   region: ap-southeast-1
   endpointType: REGIONAL
+  stage: ${opt:stage, 'dev'}
   environment:
     COGNITO_CLIENT_ID: !Ref CognitoUserPoolClient
     USER_POOL_ID: !Ref CognitoUserPool
+    IMAGES_BUCKET: careshare-donation-images-${self:provider.stage}
   iam:
     role:
       statements:
@@ -20,6 +22,8 @@ provider:
             - dynamodb:PutItem
             - dynamodb:UpdateItem
             - dynamodb:DeleteItem
+            - s3:PutObject
+            - s3:GetObject
           Resource:
             - !GetAtt UsersTable.Arn
             - !GetAtt DonationsTable.Arn
@@ -27,6 +31,7 @@ provider:
             - !Sub "${DonationsTable.Arn}/index/StatusIndex"
             - !Sub "${DonationsTable.Arn}/index/VolunteerIndex"
             - !Sub "${DonationsTable.Arn}/index/ReceiverIndex"
+            - !Sub "arn:aws:s3:::careshare-donation-images-${self:provider.stage}/*"
         - Effect: Allow
           Action:
             - cognito-idp:AdminConfirmSignUp
@@ -88,6 +93,18 @@ functions:
             type: COGNITO_USER_POOLS
             arn: !GetAtt CognitoUserPool.Arn
   
+  getUploadUrl:
+    handler: src/common/controller.getUploadUrl
+    events:
+      - http:
+          path: api/upload-url
+          method: get
+          cors: true
+          authorizer:
+            name: cognitoAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt CognitoUserPool.Arn
+
   getActiveDonations:
     handler: src/donor/controller.getActiveDonations
     events:
@@ -270,6 +287,16 @@ functions:
             
 resources:
   Resources:
+    DonationImagesBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: careshare-donation-images-${self:provider.stage}
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: true
+          BlockPublicPolicy: true
+          IgnorePublicAcls: true
+          RestrictPublicBuckets: true
+
     UsersTable:
       Type: AWS::DynamoDB::Table
       Properties:
