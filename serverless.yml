@@ -8,8 +8,8 @@ provider:
   endpointType: REGIONAL
   stage: ${opt:stage, 'dev'}
   environment:
-    COGNITO_CLIENT_ID: !Ref CognitoUserPoolClient
-    USER_POOL_ID: !Ref CognitoUserPool
+    COGNITO_CLIENT_ID: { "Ref": "CognitoUserPoolClient" }
+    USER_POOL_ID: { "Ref": "CognitoUserPool" }
     IMAGES_BUCKET: careshare-donation-images-${self:provider.stage}
   iam:
     role:
@@ -32,11 +32,6 @@ provider:
             - !Sub "${DonationsTable.Arn}/index/VolunteerIndex"
             - !Sub "${DonationsTable.Arn}/index/ReceiverIndex"
             - !Sub "arn:aws:s3:::careshare-donation-images-${self:provider.stage}/*"
-        - Effect: Allow
-          Action:
-            - cognito-idp:AdminConfirmSignUp
-          Resource:
-            - !GetAtt CognitoUserPool.Arn
 plugins:
   - serverless-esbuild
   - serverless-dynamodb
@@ -70,6 +65,14 @@ functions:
     events:
       - http:
           path: api/auth/register
+          method: post
+          cors: true
+ 
+  verifyEmail:
+    handler: src/common/controller.verifyEmail
+    events:
+      - http:
+          path: api/auth/verify
           method: post
           cors: true
 
@@ -364,8 +367,9 @@ resources:
         UsernameAttributes: [email]
         AutoVerifiedAttributes: [email]
         Schema:
-          - Name: address
+          - Name: email
             AttributeDataType: String
+            Required: true
             Mutable: true
           - Name: role
             AttributeDataType: String

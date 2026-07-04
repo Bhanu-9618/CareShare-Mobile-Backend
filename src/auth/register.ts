@@ -24,11 +24,6 @@ export const register = async (event: any) => {
     const signUpCommand = new SignUpCommand(params);
     const cognitoResponse = await client.send(signUpCommand);
 
-    await client.send(new AdminConfirmSignUpCommand({
-      UserPoolId: process.env.USER_POOL_ID,
-      Username: email
-    }));
-
     if (cognitoResponse.UserSub) {
       await dynamoDB.send(new PutCommand({
         TableName: "UsersTable",
