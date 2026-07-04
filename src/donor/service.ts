@@ -1,9 +1,6 @@
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
-
-const ddbClient = new DynamoDBClient({ region: "ap-southeast-1" });
-const dynamoDB = DynamoDBDocumentClient.from(ddbClient);
-const TABLE_NAME = "DonationsTable";
+import { PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { dynamoDB } from "../lib/db";
+const TABLE_NAME = process.env.DONATIONS_TABLE || "DonationsTable";
 
 export const createDonationRecord = async (donation: any) => {
   return await dynamoDB.send(new PutCommand({
@@ -11,8 +8,9 @@ export const createDonationRecord = async (donation: any) => {
     Item: donation
   }));
 };
+import { DonationStatus } from "../common/types";
 
-export const getDonationsByStatus = async (donorId: string, status: string) => {
+export const getDonationsByStatus = async (donorId: string, status: DonationStatus) => {
 
   return await dynamoDB.send(new QueryCommand({
     TableName: TABLE_NAME,

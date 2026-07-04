@@ -1,8 +1,6 @@
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, QueryCommand, UpdateCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
-
-const ddbClient = new DynamoDBClient({ region: "ap-southeast-1" });
-const docClient = DynamoDBDocumentClient.from(ddbClient);
+import { QueryCommand, UpdateCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
+import { dynamoDB as docClient } from "../lib/db";
+import { DonationStatus } from "../common/types";
 
 const TABLE_NAME = process.env.DONATIONS_TABLE || "DonationsTable";
 
@@ -15,7 +13,7 @@ export const getActiveFeed = async () => {
             "#status": "status"
         },
         ExpressionAttributeValues: {
-            ":status": "ACTIVE"
+            ":status": DonationStatus.ACTIVE
         }
     };
     const result = await docClient.send(new QueryCommand(params));
@@ -33,7 +31,7 @@ export const getOngoingTasksCount = async (volunteerId: string) => {
         },
         ExpressionAttributeValues: {
             ":vid": volunteerId,
-            ":status": "ACCEPTED"
+            ":status": DonationStatus.ACCEPTED
         }
     };
     const result = await docClient.send(new QueryCommand(params));
@@ -50,9 +48,9 @@ export const claimDonationRecord = async (donationId: string, volunteerId: strin
             "#status": "status"
         },
         ExpressionAttributeValues: {
-            ":newStatus": "ACCEPTED",
+            ":newStatus": DonationStatus.ACCEPTED,
             ":vid": volunteerId,
-            ":expectedStatus": "ACTIVE"
+            ":expectedStatus": DonationStatus.ACTIVE
         },
         ReturnValues: "ALL_NEW" as const
     };
@@ -72,7 +70,7 @@ export const getOngoingTasksByVolunteer = async (volunteerId: string) => {
         },
         ExpressionAttributeValues: {
             ":vid": volunteerId,
-            ":status": "ACCEPTED"
+            ":status": DonationStatus.ACCEPTED
         }
     };
     const result = await docClient.send(new QueryCommand(params));
@@ -89,9 +87,9 @@ export const pickupDonationRecord = async (donationId: string, volunteerId: stri
             "#status": "status"
         },
         ExpressionAttributeValues: {
-            ":newStatus": "LIVE",
+            ":newStatus": DonationStatus.LIVE,
             ":vid": volunteerId,
-            ":expectedStatus": "ACCEPTED"
+            ":expectedStatus": DonationStatus.ACCEPTED
         },
         ReturnValues: "ALL_NEW" as const
     };
@@ -110,8 +108,8 @@ export const getInventoryByVolunteer = async (volunteerId: string) => {
         },
         ExpressionAttributeValues: {
             ":vid": volunteerId,
-            ":status1": "LIVE",
-            ":status2": "REQUESTED"
+            ":status1": DonationStatus.LIVE,
+            ":status2": DonationStatus.REQUESTED
         }
     };
     const result = await docClient.send(new QueryCommand(params));
@@ -128,7 +126,7 @@ export const confirmDonationRequestRecord = async (donationId: string, volunteer
         ExpressionAttributeValues: {
             ":otp": otp,
             ":vid": volunteerId,
-            ":expectedStatus": "REQUESTED"
+            ":expectedStatus": DonationStatus.REQUESTED
         },
         ReturnValues: "ALL_NEW" as const
     };
@@ -153,9 +151,9 @@ export const completeDonationRecord = async (donationId: string, volunteerId: st
         ConditionExpression: "volunteerId = :vid AND #status = :expectedStatus",
         ExpressionAttributeNames: { "#status": "status" },
         ExpressionAttributeValues: {
-            ":newStatus": "COMPLETED",
+            ":newStatus": DonationStatus.COMPLETED,
             ":vid": volunteerId,
-            ":expectedStatus": "REQUESTED"
+            ":expectedStatus": DonationStatus.REQUESTED
         },
         ReturnValues: "ALL_NEW" as const
     };
@@ -172,7 +170,7 @@ export const getHistoryByVolunteer = async (volunteerId: string) => {
         ExpressionAttributeNames: { "#status": "status" },
         ExpressionAttributeValues: {
             ":vid": volunteerId,
-            ":status": "COMPLETED"
+            ":status": DonationStatus.COMPLETED
         }
     };
     const result = await docClient.send(new QueryCommand(params));

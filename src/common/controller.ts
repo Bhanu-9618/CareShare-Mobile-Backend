@@ -2,9 +2,8 @@ import { getSignedUploadUrl } from "../lib/s3";
 import { v4 as uuidv4 } from "uuid";
 import * as crypto from "crypto";
 (global as any).crypto = crypto;
-import { CognitoIdentityProviderClient, ConfirmSignUpCommand } from "@aws-sdk/client-cognito-identity-provider";
-
-const cognito = new CognitoIdentityProviderClient({});
+import { ConfirmSignUpCommand } from "@aws-sdk/client-cognito-identity-provider";
+import { cognitoClient as cognito } from "../lib/cognito";
 
 export const getUploadUrl = async (event: any) => {
     const filename = event.queryStringParameters?.filename || "image.jpg";

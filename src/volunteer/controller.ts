@@ -11,12 +11,10 @@ import {
     getHistoryByVolunteer   
 } from './service';
 import { attachImageUrls } from "../lib/imageProcessor";
+import { withRole } from '../common/middleware';
 
-export const getVolunteerFeed = async (event: any) => {
+const getVolunteerFeedHandler = async (event: any) => {
     try {
-        const volunteerId = event.requestContext?.authorizer?.claims?.sub;
-        if (!volunteerId) return { statusCode: 401, body: JSON.stringify({ message: 'Unauthorized' }) };
-
         const feed = await getActiveFeed();
         const feedWithImages = await attachImageUrls(feed || []);
         return { statusCode: 200, body: JSON.stringify(feedWithImages) };
@@ -25,11 +23,12 @@ export const getVolunteerFeed = async (event: any) => {
         return { statusCode: 500, body: JSON.stringify({ error: "Failed to fetch feed", details: error.message }) };
     }
 };
-export const claimDonation = async (event: any) => {
-    try {
-        const volunteerId = event.requestContext?.authorizer?.claims?.sub;
-        if (!volunteerId) return { statusCode: 401, body: 'Unauthorized' };
 
+export const getVolunteerFeed = withRole(['VOLUNTEER'], getVolunteerFeedHandler);
+
+const claimDonationHandler = async (event: any) => {
+    try {
+        const volunteerId = event.user.userId;
         const donationId = event.pathParameters?.id;
         if (!donationId) return { statusCode: 400, body: JSON.stringify({ error: "Donation ID is required" }) };
 
@@ -61,11 +60,11 @@ export const claimDonation = async (event: any) => {
     }
 };
 
-export const getOngoingTasks = async (event: any) => {
-    try {
-        const volunteerId = event.requestContext?.authorizer?.claims?.sub;
-        if (!volunteerId) return { statusCode: 401, body: JSON.stringify({ message: 'Unauthorized' }) };
+export const claimDonation = withRole(['VOLUNTEER'], claimDonationHandler);
 
+const getOngoingTasksHandler = async (event: any) => {
+    try {
+        const volunteerId = event.user.userId;
         const tasks = await getOngoingTasksByVolunteer(volunteerId);
         const feedWithImages = await attachImageUrls(tasks || []);
         return { statusCode: 200, body: JSON.stringify(feedWithImages) };
@@ -75,11 +74,11 @@ export const getOngoingTasks = async (event: any) => {
     }
 };
 
-export const pickupDonation = async (event: any) => {
-    try {
-        const volunteerId = event.requestContext?.authorizer?.claims?.sub;
-        if (!volunteerId) return { statusCode: 401, body: JSON.stringify({ message: 'Unauthorized' }) };
+export const getOngoingTasks = withRole(['VOLUNTEER'], getOngoingTasksHandler);
 
+const pickupDonationHandler = async (event: any) => {
+    try {
+        const volunteerId = event.user.userId;
         const donationId = event.pathParameters?.id;
         if (!donationId) return { statusCode: 400, body: JSON.stringify({ error: "Donation ID is required" }) };
 
@@ -104,11 +103,11 @@ export const pickupDonation = async (event: any) => {
     }
 };
 
-export const getVolunteerInventory = async (event: any) => {
-    try {
-        const volunteerId = event.requestContext?.authorizer?.claims?.sub;
-        if (!volunteerId) return { statusCode: 401, body: JSON.stringify({ message: 'Unauthorized' }) };
+export const pickupDonation = withRole(['VOLUNTEER'], pickupDonationHandler);
 
+const getVolunteerInventoryHandler = async (event: any) => {
+    try {
+        const volunteerId = event.user.userId;
         const inventory = await getInventoryByVolunteer(volunteerId);
         const feedWithImages = await attachImageUrls(inventory || []);
         return { statusCode: 200, body: JSON.stringify(feedWithImages) };
@@ -118,9 +117,11 @@ export const getVolunteerInventory = async (event: any) => {
     }
 };
 
-export const confirmRequest = async (event: any) => {
+export const getVolunteerInventory = withRole(['VOLUNTEER'], getVolunteerInventoryHandler);
+
+const confirmRequestHandler = async (event: any) => {
     try {
-        const volunteerId = event.requestContext?.authorizer?.claims?.sub;
+        const volunteerId = event.user.userId;
         const donationId = event.pathParameters?.id;
 
         if (!donationId) return { statusCode: 400, body: JSON.stringify({ error: "Donation ID is required" }) };
@@ -137,9 +138,11 @@ export const confirmRequest = async (event: any) => {
     }
 };
 
-export const deliverDonation = async (event: any) => {
+export const confirmRequest = withRole(['VOLUNTEER'], confirmRequestHandler);
+
+const deliverDonationHandler = async (event: any) => {
     try {
-        const volunteerId = event.requestContext?.authorizer?.claims?.sub;
+        const volunteerId = event.user.userId;
         const donationId = event.pathParameters?.id;
         
         if (!donationId) return { statusCode: 400, body: JSON.stringify({ error: "Donation ID is required" }) };
@@ -163,9 +166,11 @@ export const deliverDonation = async (event: any) => {
     }
 };
 
-export const getVolunteerHistory = async (event: any) => {
+export const deliverDonation = withRole(['VOLUNTEER'], deliverDonationHandler);
+
+const getVolunteerHistoryHandler = async (event: any) => {
     try {
-        const volunteerId = event.requestContext?.authorizer?.claims?.sub;
+        const volunteerId = event.user.userId;
         const history = await getHistoryByVolunteer(volunteerId);
         const historyWithImages = await attachImageUrls(history || []);
         return { statusCode: 200, body: JSON.stringify(historyWithImages) };
@@ -173,3 +178,5 @@ export const getVolunteerHistory = async (event: any) => {
         return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
     }
 };
+
+export const getVolunteerHistory = withRole(['VOLUNTEER'], getVolunteerHistoryHandler);

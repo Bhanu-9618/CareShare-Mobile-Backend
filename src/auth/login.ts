@@ -1,6 +1,5 @@
-import { CognitoIdentityProviderClient, InitiateAuthCommand } from "@aws-sdk/client-cognito-identity-provider";
-
-const client = new CognitoIdentityProviderClient({ region: "ap-southeast-1" });
+import { InitiateAuthCommand } from "@aws-sdk/client-cognito-identity-provider";
+import { cognitoClient as client } from "../lib/cognito";
 
 export const login = async (event: any) => {
   const { email, password } = JSON.parse(event.body);

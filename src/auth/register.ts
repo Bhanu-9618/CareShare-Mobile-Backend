@@ -1,10 +1,7 @@
-import { CognitoIdentityProviderClient, SignUpCommand, AdminConfirmSignUpCommand } from "@aws-sdk/client-cognito-identity-provider";
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
-
-const client = new CognitoIdentityProviderClient({ region: "ap-southeast-1" });
-const ddbClient = new DynamoDBClient({ region: "ap-southeast-1" });
-const dynamoDB = DynamoDBDocumentClient.from(ddbClient);
+import { SignUpCommand, AdminConfirmSignUpCommand } from "@aws-sdk/client-cognito-identity-provider";
+import { PutCommand } from "@aws-sdk/lib-dynamodb";
+import { cognitoClient as client } from "../lib/cognito";
+import { dynamoDB } from "../lib/db";
 
 export const register = async (event: any) => {
   const { email, password, name, role, address } = JSON.parse(event.body);
@@ -26,7 +23,7 @@ export const register = async (event: any) => {
 
     if (cognitoResponse.UserSub) {
       await dynamoDB.send(new PutCommand({
-        TableName: "UsersTable",
+        TableName: process.env.USERS_TABLE || "UsersTable",
         Item: {
           userId: cognitoResponse.UserSub,
           email: email,

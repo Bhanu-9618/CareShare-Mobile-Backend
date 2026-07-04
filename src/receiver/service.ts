@@ -1,8 +1,6 @@
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, QueryCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
-
-const client = new DynamoDBClient({ region: "ap-southeast-1" });
-const docClient = DynamoDBDocumentClient.from(client);
+import { QueryCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { dynamoDB as docClient } from "../lib/db";
+import { DonationStatus } from "../common/types";
 const TABLE_NAME = process.env.DONATIONS_TABLE || "DonationsTable";
 
 export const getLiveDonations = async () => {
@@ -11,7 +9,7 @@ export const getLiveDonations = async () => {
         IndexName: "StatusIndex",
         KeyConditionExpression: "#status = :status",
         ExpressionAttributeNames: { "#status": "status" },
-        ExpressionAttributeValues: { ":status": "LIVE" }
+        ExpressionAttributeValues: { ":status": DonationStatus.LIVE }
     };
     const result = await docClient.send(new QueryCommand(params));
     return result.Items;
@@ -25,9 +23,9 @@ export const requestDonationRecord = async (donationId: string, receiverId: stri
         ConditionExpression: "#status = :expectedStatus",
         ExpressionAttributeNames: { "#status": "status" },
         ExpressionAttributeValues: { 
-            ":newStatus": "REQUESTED", 
+            ":newStatus": DonationStatus.REQUESTED, 
             ":rid": receiverId,
-            ":expectedStatus": "LIVE" 
+            ":expectedStatus": DonationStatus.LIVE 
         },
         ReturnValues: "ALL_NEW" as const
     };
@@ -35,7 +33,7 @@ export const requestDonationRecord = async (donationId: string, receiverId: stri
     return result.Attributes;
 };
 
-export const getDonationsByReceiverAndStatus = async (receiverId: string, status: string) => {
+export const getDonationsByReceiverAndStatus = async (receiverId: string, status: DonationStatus) => {
     const params = {
         TableName: TABLE_NAME,
         IndexName: "ReceiverIndex",

@@ -11,6 +11,8 @@ provider:
     COGNITO_CLIENT_ID: { "Ref": "CognitoUserPoolClient" }
     USER_POOL_ID: { "Ref": "CognitoUserPool" }
     IMAGES_BUCKET: careshare-donation-images-${self:provider.stage}
+    USERS_TABLE: UsersTable
+    DONATIONS_TABLE: DonationsTable
   iam:
     role:
       statements:
