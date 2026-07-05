@@ -6,6 +6,7 @@ import {
     pickupDonationRecord,
     getInventoryByVolunteer,
     confirmDonationRequestRecord,
+    cancelReceiverRequestRecord,
     getDonationById,
     completeDonationRecord,
     getHistoryByVolunteer   
@@ -139,6 +140,26 @@ const confirmRequestHandler = async (event: any) => {
 };
 
 export const confirmRequest = withRole(['VOLUNTEER'], confirmRequestHandler);
+
+const cancelRequestHandler = async (event: any) => {
+    try {
+        const volunteerId = event.user.userId;
+        const donationId = event.pathParameters?.id;
+
+        if (!donationId) return { statusCode: 400, body: JSON.stringify({ error: "Donation ID is required" }) };
+
+        const updated = await cancelReceiverRequestRecord(donationId, volunteerId);
+
+        return { statusCode: 200, body: JSON.stringify({ message: "Request cancelled, donation is LIVE again", donation: updated }) };
+    } catch (error: any) {
+        if (error.name === "ConditionalCheckFailedException") {
+            return { statusCode: 400, body: JSON.stringify({ message: "Invalid action. Donation may not be in REQUESTED state." }) };
+        }
+        return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+    }
+};
+
+export const cancelRequest = withRole(['VOLUNTEER'], cancelRequestHandler);
 
 const deliverDonationHandler = async (event: any) => {
     try {

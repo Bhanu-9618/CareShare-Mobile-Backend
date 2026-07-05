@@ -134,6 +134,24 @@ export const confirmDonationRequestRecord = async (donationId: string, volunteer
     return result.Attributes;
 };
 
+export const cancelReceiverRequestRecord = async (donationId: string, volunteerId: string) => {
+    const params = {
+        TableName: TABLE_NAME,
+        Key: { donationId },
+        UpdateExpression: "SET #status = :newStatus REMOVE receiverId",
+        ConditionExpression: "volunteerId = :vid AND #status = :expectedStatus",
+        ExpressionAttributeNames: { "#status": "status" },
+        ExpressionAttributeValues: {
+            ":newStatus": DonationStatus.LIVE,
+            ":vid": volunteerId,
+            ":expectedStatus": DonationStatus.REQUESTED
+        },
+        ReturnValues: "ALL_NEW" as const
+    };
+    const result = await docClient.send(new UpdateCommand(params));
+    return result.Attributes;
+};
+
 export const getDonationById = async (donationId: string) => {
     const params = {
         TableName: TABLE_NAME,

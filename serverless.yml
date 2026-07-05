@@ -278,6 +278,18 @@ functions:
             type: COGNITO_USER_POOLS
             arn: !GetAtt CognitoUserPool.Arn
 
+  cancelRequest:
+    handler: src/volunteer/controller.cancelRequest
+    events:
+      - http:
+          path: api/volunteer/donations/{id}/cancel
+          method: post
+          cors: true
+          authorizer:
+            name: cognitoAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt CognitoUserPool.Arn
+
   deliverDonation:
     handler: src/volunteer/controller.deliverDonation
     events:
