@@ -265,6 +265,18 @@ functions:
             name: cognitoAuthorizer
             type: COGNITO_USER_POOLS
             arn: !GetAtt CognitoUserPool.Arn
+
+  expireDonations:
+    handler: src/receiver/controller.expireDonations
+    events:
+      - http:
+          path: api/receiver/donations/expire
+          method: post
+          cors: true
+          authorizer:
+            name: cognitoAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt CognitoUserPool.Arn
   
   confirmRequest:
     handler: src/volunteer/controller.confirmRequest

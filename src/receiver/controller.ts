@@ -1,4 +1,4 @@
-import { getLiveDonations, requestDonationRecord, getDonationsByReceiverAndStatus } from './service';
+import { getLiveDonations, requestDonationRecord, getDonationsByReceiverAndStatus, expireOldDonationsRecords } from './service';
 import { attachImageUrls } from "../lib/imageProcessor";
 import { withRole } from '../common/middleware';
 import { DonationStatus } from "../common/types";
@@ -75,3 +75,20 @@ const getReceiverHistoryHandler = async (event: any) => {
 };
 
 export const getReceiverHistory = withRole(['RECEIVER'], getReceiverHistoryHandler);
+
+const expireDonationsHandler = async (event: any) => {
+    try {
+        const currentTimestamp = Math.floor(Date.now() / 1000);
+        const expiredCount = await expireOldDonationsRecords(currentTimestamp);
+        
+        return { 
+            statusCode: 200, 
+            body: JSON.stringify({ message: `Successfully checked and expired ${expiredCount} donations.` }) 
+        };
+    } catch (error: any) {
+        console.error("Expire donations error:", error);
+        return { statusCode: 500, body: JSON.stringify({ error: "Failed to expire donations" }) };
+    }
+};
+
+export const expireDonations = withRole(['RECEIVER'], expireDonationsHandler);

@@ -3,5 +3,6 @@ export enum DonationStatus {
     REQUESTED = "REQUESTED",
     ACCEPTED = "ACCEPTED",
     LIVE = "LIVE",
-    COMPLETED = "COMPLETED"
+    COMPLETED = "COMPLETED",
+    EXPIRED = "EXPIRED"
 }
