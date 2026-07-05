@@ -110,6 +110,18 @@ functions:
             type: COGNITO_USER_POOLS
             arn: !GetAtt CognitoUserPool.Arn
 
+  getUserData:
+    handler: src/common/controller.getUserData
+    events:
+      - http:
+          path: api/users/{id}
+          method: get
+          cors: true
+          authorizer:
+            name: cognitoAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt CognitoUserPool.Arn
+
   getActiveDonations:
     handler: src/donor/controller.getActiveDonations
     events:
