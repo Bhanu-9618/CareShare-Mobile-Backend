@@ -146,6 +146,18 @@ functions:
             type: COGNITO_USER_POOLS
             arn: !GetAtt CognitoUserPool.Arn
 
+  getDonationHistory:
+    handler: src/common/controller.getDonationHistory
+    events:
+      - http:
+          path: api/donations/history
+          method: get
+          cors: true
+          authorizer:
+            name: cognitoAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt CognitoUserPool.Arn
+
   getAllDonations:
     handler: src/donor/controller.getAllDonations
     events:
@@ -158,17 +170,6 @@ functions:
             type: COGNITO_USER_POOLS
             arn: !GetAtt CognitoUserPool.Arn
 
-  getDonationHistory:
-    handler: src/donor/controller.getDonationHistory
-    events:
-      - http:
-          path: api/donor/history
-          method: get
-          cors: true
-          authorizer:
-            name: cognitoAuthorizer
-            type: COGNITO_USER_POOLS
-            arn: !GetAtt CognitoUserPool.Arn       
 
   getVolunteerFeed:
     handler: src/volunteer/controller.getVolunteerFeed
@@ -278,17 +279,6 @@ functions:
             type: COGNITO_USER_POOLS
             arn: !GetAtt CognitoUserPool.Arn
 
-  getReceiverHistory: 
-    handler: src/receiver/controller.getReceiverHistory
-    events:
-      - http:
-          path: api/receiver/history
-          method: get
-          cors: true
-          authorizer:
-            name: cognitoAuthorizer
-            type: COGNITO_USER_POOLS
-            arn: !GetAtt CognitoUserPool.Arn
 
   expireDonations:
     handler: src/receiver/controller.expireDonations
@@ -338,18 +328,7 @@ functions:
             type: COGNITO_USER_POOLS
             arn: !GetAtt CognitoUserPool.Arn
 
-  getVolunteerHistory:
-    handler: src/volunteer/controller.getVolunteerHistory
-    events:
-      - http:
-          path: api/volunteer/history
-          method: get
-          cors: true
-          authorizer:
-            name: cognitoAuthorizer
-            type: COGNITO_USER_POOLS
-            arn: !GetAtt CognitoUserPool.Arn
-            
+
 resources:
   Resources:
     DonationImagesBucket:

@@ -63,18 +63,7 @@ const getReceiverHubHandler = async (event: any) => {
 
 export const getReceiverHub = withRole(['RECEIVER'], getReceiverHubHandler);
 
-const getReceiverHistoryHandler = async (event: any) => {
-    try {
-        const receiverId = event.user.userId;
-        const history = await getDonationsByReceiverAndStatus(receiverId, DonationStatus.COMPLETED);
-        const historyWithImages = await attachImageUrls(history || []);
-        return { statusCode: 200, body: JSON.stringify(historyWithImages) };
-    } catch (error: any) {
-        return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
-    }
-};
 
-export const getReceiverHistory = withRole(['RECEIVER'], getReceiverHistoryHandler);
 
 const expireDonationsHandler = async (event: any) => {
     try {

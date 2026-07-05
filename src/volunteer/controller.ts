@@ -8,8 +8,7 @@ import {
     confirmDonationRequestRecord,
     cancelReceiverRequestRecord,
     getDonationById,
-    completeDonationRecord,
-    getHistoryByVolunteer   
+    completeDonationRecord
 } from './service';
 import { attachImageUrls } from "../lib/imageProcessor";
 import { withRole } from '../common/middleware';
@@ -188,16 +187,4 @@ const deliverDonationHandler = async (event: any) => {
 };
 
 export const deliverDonation = withRole(['VOLUNTEER'], deliverDonationHandler);
-
-const getVolunteerHistoryHandler = async (event: any) => {
-    try {
-        const volunteerId = event.user.userId;
-        const history = await getHistoryByVolunteer(volunteerId);
-        const historyWithImages = await attachImageUrls(history || []);
-        return { statusCode: 200, body: JSON.stringify(historyWithImages) };
-    } catch (error: any) {
-        return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
-    }
-};
-
-export const getVolunteerHistory = withRole(['VOLUNTEER'], getVolunteerHistoryHandler);
+

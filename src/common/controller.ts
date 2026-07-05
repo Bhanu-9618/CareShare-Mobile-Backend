@@ -6,7 +6,7 @@ import { ConfirmSignUpCommand } from "@aws-sdk/client-cognito-identity-provider"
 import { cognitoClient as cognito } from "../lib/cognito";
 import { withRole } from './middleware';
 import { attachImageUrls } from "../lib/imageProcessor";
-import { getUserDataRecord, getExpiredDonationsRecords, updateUserDataRecord } from "./service";
+import { getUserDataRecord, getExpiredDonationsRecords, updateUserDataRecord, getDonationHistoryRecords } from "./service";
 
 export const getUploadUrl = async (event: any) => {
     const filename = event.queryStringParameters?.filename || "image.jpg";
@@ -153,3 +153,21 @@ const updateUserDataHandler = async (event: any) => {
 };
 
 export const updateUserData = withRole(['DONOR', 'RECEIVER', 'VOLUNTEER'], updateUserDataHandler);
+
+const getDonationHistoryHandler = async (event: any) => {
+    try {
+        const { userId, role } = event.user;
+        const items = await getDonationHistoryRecords(userId, role);
+        const historyWithImages = await attachImageUrls(items || []);
+        
+        return { statusCode: 200, body: JSON.stringify(historyWithImages) };
+    } catch (error: any) {
+        if (error.message === "Role not supported for this action") {
+            return { statusCode: 403, body: JSON.stringify({ error: error.message }) };
+        }
+        console.error("Get donation history error:", error);
+        return { statusCode: 500, body: JSON.stringify({ error: "Failed to fetch donation history" }) };
+    }
+};
+
+export const getDonationHistory = withRole(['DONOR', 'RECEIVER', 'VOLUNTEER'], getDonationHistoryHandler);

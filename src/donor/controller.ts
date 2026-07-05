@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as crypto from 'crypto';
 (global as any).crypto = crypto;
-import { createDonationRecord, getDonationsByStatus, getDonationsExcludeStatuses } from './service';
+import { createDonationRecord, getDonationsExcludeStatuses } from './service';
 import { attachImageUrls } from "../lib/imageProcessor";
 import { withRole } from '../common/middleware';
 import { DonationStatus } from "../common/types";
@@ -34,12 +34,4 @@ const getAllDonationsHandler = async (event: any) => {
   return { statusCode: 200, body: JSON.stringify(feedWithImages) };
 };
 
-export const getAllDonations = withRole(['DONOR'], getAllDonationsHandler);
-const getDonationHistoryHandler = async (event: any) => { 
-  const donorId = event.user.userId;
-  const result = await getDonationsByStatus(donorId, DonationStatus.COMPLETED);
-  const historyWithImages = await attachImageUrls(result.Items || []);
-  return { statusCode: 200, body: JSON.stringify(historyWithImages) };
-};
-
-export const getDonationHistory = withRole(['DONOR'], getDonationHistoryHandler);
+export const getAllDonations = withRole(['DONOR'], getAllDonationsHandler);

@@ -10,17 +10,7 @@ export const createDonationRecord = async (donation: any) => {
 };
 import { DonationStatus } from "../common/types";
 
-export const getDonationsByStatus = async (donorId: string, status: DonationStatus) => {
 
-  return await dynamoDB.send(new QueryCommand({
-    TableName: TABLE_NAME,
-    IndexName: "DonorIndex",
-    KeyConditionExpression: "donorId = :did",
-    FilterExpression: "#s = :status",
-    ExpressionAttributeNames: { "#s": "status" },
-    ExpressionAttributeValues: { ":did": donorId, ":status": status }
-  }));
-};
 
 export const getDonationsExcludeStatuses = async (donorId: string, excludedStatus1: DonationStatus, excludedStatus2: DonationStatus) => {
   return await dynamoDB.send(new QueryCommand({

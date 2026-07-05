@@ -178,19 +178,4 @@ export const completeDonationRecord = async (donationId: string, volunteerId: st
     const result = await docClient.send(new UpdateCommand(params));
     return result.Attributes;
 };
-
-export const getHistoryByVolunteer = async (volunteerId: string) => {
-    const params = {
-        TableName: TABLE_NAME,
-        IndexName: "VolunteerIndex",
-        KeyConditionExpression: "volunteerId = :vid",
-        FilterExpression: "#status = :status",
-        ExpressionAttributeNames: { "#status": "status" },
-        ExpressionAttributeValues: {
-            ":vid": volunteerId,
-            ":status": DonationStatus.COMPLETED
-        }
-    };
-    const result = await docClient.send(new QueryCommand(params));
-    return result.Items || [];
-};
+
