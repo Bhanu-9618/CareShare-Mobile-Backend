@@ -91,4 +91,4 @@ const expireDonationsHandler = async (event: any) => {
     }
 };
 
-export const expireDonations = withRole(['RECEIVER'], expireDonationsHandler);
+export const expireDonations = withRole(['RECEIVER', 'DONOR', 'VOLUNTEER'], expireDonationsHandler);
