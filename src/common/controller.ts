@@ -4,11 +4,9 @@ import * as crypto from "crypto";
 (global as any).crypto = crypto;
 import { ConfirmSignUpCommand } from "@aws-sdk/client-cognito-identity-provider";
 import { cognitoClient as cognito } from "../lib/cognito";
-import { GetCommand, QueryCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
-import { dynamoDB } from "../lib/db";
 import { withRole } from './middleware';
 import { attachImageUrls } from "../lib/imageProcessor";
-import { DonationStatus } from "./types";
+import { getUserDataRecord, getExpiredDonationsRecords, updateUserDataRecord } from "./service";
 
 export const getUploadUrl = async (event: any) => {
     const filename = event.queryStringParameters?.filename || "image.jpg";
@@ -51,17 +49,13 @@ const getUserDataHandler = async (event: any) => {
             return { statusCode: 400, body: JSON.stringify({ error: "User ID is required" }) };
         }
 
-        const TABLE_NAME = process.env.USERS_TABLE || "UsersTable";
-        const result = await dynamoDB.send(new GetCommand({
-            TableName: TABLE_NAME,
-            Key: { userId }
-        }));
+        const item = await getUserDataRecord(userId);
 
-        if (!result.Item) {
+        if (!item) {
             return { statusCode: 404, body: JSON.stringify({ error: "User not found" }) };
         }
 
-        const { address, email, name, role } = result.Item;
+        const { address, email, name, role } = item;
 
         return {
             statusCode: 200,
@@ -81,38 +75,14 @@ export const getUserData = withRole(['DONOR', 'RECEIVER', 'VOLUNTEER'], getUserD
 const getExpiredDonationsHandler = async (event: any) => {
     try {
         const { userId, role } = event.user;
-        const TABLE_NAME = process.env.DONATIONS_TABLE || "DonationsTable";
-
-        let indexName = "";
-        let keyCondition = "";
-
-        if (role === "DONOR") {
-            indexName = "DonorIndex";
-            keyCondition = "donorId = :userId";
-        } else if (role === "VOLUNTEER") {
-            indexName = "VolunteerIndex";
-            keyCondition = "volunteerId = :userId";
-        } else {
-            return { statusCode: 403, body: JSON.stringify({ error: "Role not supported for this action" }) };
-        }
-
-        const params = {
-            TableName: TABLE_NAME,
-            IndexName: indexName,
-            KeyConditionExpression: keyCondition,
-            FilterExpression: "#status = :status",
-            ExpressionAttributeNames: { "#status": "status" },
-            ExpressionAttributeValues: {
-                ":userId": userId,
-                ":status": DonationStatus.EXPIRED
-            }
-        };
-
-        const result = await dynamoDB.send(new QueryCommand(params));
-        const expiredWithImages = await attachImageUrls(result.Items || []);
+        const items = await getExpiredDonationsRecords(userId, role);
+        const expiredWithImages = await attachImageUrls(items || []);
         
         return { statusCode: 200, body: JSON.stringify(expiredWithImages) };
     } catch (error: any) {
+        if (error.message === "Role not supported for this action") {
+            return { statusCode: 403, body: JSON.stringify({ error: error.message }) };
+        }
         console.error("Get expired donations error:", error);
         return { statusCode: 500, body: JSON.stringify({ error: "Failed to fetch expired donations" }) };
     }
@@ -159,17 +129,8 @@ const updateUserDataHandler = async (event: any) => {
             expressionAttributeValues[":address"] = address;
         }
 
-        const TABLE_NAME = process.env.USERS_TABLE || "UsersTable";
-        const result = await dynamoDB.send(new UpdateCommand({
-            TableName: TABLE_NAME,
-            Key: { userId },
-            UpdateExpression: updateExpression,
-            ExpressionAttributeNames: expressionAttributeNames,
-            ExpressionAttributeValues: expressionAttributeValues,
-            ReturnValues: "ALL_NEW"
-        }));
-
-        const updatedUser = result.Attributes || {};
+        const updatedUser = await updateUserDataRecord(userId, updateExpression, expressionAttributeNames, expressionAttributeValues) || {};
+        
         return {
             statusCode: 200,
             body: JSON.stringify({ 
