@@ -22,13 +22,13 @@ export const getDonationsByStatus = async (donorId: string, status: DonationStat
   }));
 };
 
-export const getDonationsExcludeStatus = async (donorId: string, excludedStatus: DonationStatus) => {
+export const getDonationsExcludeStatuses = async (donorId: string, excludedStatus1: DonationStatus, excludedStatus2: DonationStatus) => {
   return await dynamoDB.send(new QueryCommand({
     TableName: TABLE_NAME,
     IndexName: "DonorIndex",
     KeyConditionExpression: "donorId = :did",
-    FilterExpression: "#s <> :excludedStatus",
+    FilterExpression: "#s <> :excludedStatus1 AND #s <> :excludedStatus2",
     ExpressionAttributeNames: { "#s": "status" },
-    ExpressionAttributeValues: { ":did": donorId, ":excludedStatus": excludedStatus }
+    ExpressionAttributeValues: { ":did": donorId, ":excludedStatus1": excludedStatus1, ":excludedStatus2": excludedStatus2 }
   }));
 };
