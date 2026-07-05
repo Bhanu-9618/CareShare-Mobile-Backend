@@ -122,11 +122,11 @@ functions:
             type: COGNITO_USER_POOLS
             arn: !GetAtt CognitoUserPool.Arn
 
-  getActiveDonations:
-    handler: src/donor/controller.getActiveDonations
+  getAllDonations:
+    handler: src/donor/controller.getAllDonations
     events:
       - http:
-          path: api/donor/donations/active
+          path: api/donor/donations/all
           method: get
           cors: true
           authorizer:
