@@ -4,7 +4,7 @@ import * as crypto from "crypto";
 (global as any).crypto = crypto;
 import { ConfirmSignUpCommand } from "@aws-sdk/client-cognito-identity-provider";
 import { cognitoClient as cognito } from "../lib/cognito";
-import { GetCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, QueryCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { dynamoDB } from "../lib/db";
 import { withRole } from './middleware';
 import { attachImageUrls } from "../lib/imageProcessor";
@@ -119,3 +119,76 @@ const getExpiredDonationsHandler = async (event: any) => {
 };
 
 export const getExpiredDonations = withRole(['DONOR', 'VOLUNTEER'], getExpiredDonationsHandler);
+
+const updateUserDataHandler = async (event: any) => {
+    try {
+        const userId = event.pathParameters?.id;
+        if (!userId) {
+            return { statusCode: 400, body: JSON.stringify({ error: "User ID is required" }) };
+        }
+        if (event.user.userId !== userId) {
+            return { statusCode: 403, body: JSON.stringify({ error: "Forbidden: You can only update your own profile" }) };
+        }
+
+        let body;
+        try {
+            body = JSON.parse(event.body || "{}");
+        } catch {
+            return { statusCode: 400, body: JSON.stringify({ error: "Invalid JSON body" }) };
+        }
+
+        const { name, address } = body;
+        if (!name && !address) {
+            return { statusCode: 400, body: JSON.stringify({ error: "At least one of 'name' or 'address' is required to update" }) };
+        }
+
+        let updateExpression = "SET";
+        const expressionAttributeNames: any = {};
+        const expressionAttributeValues: any = {};
+
+        if (name) {
+            updateExpression += " #n = :name";
+            expressionAttributeNames["#n"] = "name";
+            expressionAttributeValues[":name"] = name;
+        }
+
+        if (address) {
+            if (name) updateExpression += ",";
+            updateExpression += " #a = :address";
+            expressionAttributeNames["#a"] = "address";
+            expressionAttributeValues[":address"] = address;
+        }
+
+        const TABLE_NAME = process.env.USERS_TABLE || "UsersTable";
+        const result = await dynamoDB.send(new UpdateCommand({
+            TableName: TABLE_NAME,
+            Key: { userId },
+            UpdateExpression: updateExpression,
+            ExpressionAttributeNames: expressionAttributeNames,
+            ExpressionAttributeValues: expressionAttributeValues,
+            ReturnValues: "ALL_NEW"
+        }));
+
+        const updatedUser = result.Attributes || {};
+        return {
+            statusCode: 200,
+            body: JSON.stringify({ 
+                message: "Profile updated successfully", 
+                user: {
+                    name: updatedUser.name,
+                    address: updatedUser.address,
+                    email: updatedUser.email,
+                    role: updatedUser.role
+                }
+            })
+        };
+    } catch (error: any) {
+        console.error("Update user error:", error);
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ error: "Failed to update user data" })
+        };
+    }
+};
+
+export const updateUserData = withRole(['DONOR', 'RECEIVER', 'VOLUNTEER'], updateUserDataHandler);
