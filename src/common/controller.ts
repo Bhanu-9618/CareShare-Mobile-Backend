@@ -4,9 +4,11 @@ import * as crypto from "crypto";
 (global as any).crypto = crypto;
 import { ConfirmSignUpCommand } from "@aws-sdk/client-cognito-identity-provider";
 import { cognitoClient as cognito } from "../lib/cognito";
-import { GetCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { dynamoDB } from "../lib/db";
 import { withRole } from './middleware';
+import { attachImageUrls } from "../lib/imageProcessor";
+import { DonationStatus } from "./types";
 
 export const getUploadUrl = async (event: any) => {
     const filename = event.queryStringParameters?.filename || "image.jpg";
@@ -75,3 +77,45 @@ const getUserDataHandler = async (event: any) => {
 };
 
 export const getUserData = withRole(['DONOR', 'RECEIVER', 'VOLUNTEER'], getUserDataHandler);
+
+const getExpiredDonationsHandler = async (event: any) => {
+    try {
+        const { userId, role } = event.user;
+        const TABLE_NAME = process.env.DONATIONS_TABLE || "DonationsTable";
+
+        let indexName = "";
+        let keyCondition = "";
+
+        if (role === "DONOR") {
+            indexName = "DonorIndex";
+            keyCondition = "donorId = :userId";
+        } else if (role === "VOLUNTEER") {
+            indexName = "VolunteerIndex";
+            keyCondition = "volunteerId = :userId";
+        } else {
+            return { statusCode: 403, body: JSON.stringify({ error: "Role not supported for this action" }) };
+        }
+
+        const params = {
+            TableName: TABLE_NAME,
+            IndexName: indexName,
+            KeyConditionExpression: keyCondition,
+            FilterExpression: "#status = :status",
+            ExpressionAttributeNames: { "#status": "status" },
+            ExpressionAttributeValues: {
+                ":userId": userId,
+                ":status": DonationStatus.EXPIRED
+            }
+        };
+
+        const result = await dynamoDB.send(new QueryCommand(params));
+        const expiredWithImages = await attachImageUrls(result.Items || []);
+        
+        return { statusCode: 200, body: JSON.stringify(expiredWithImages) };
+    } catch (error: any) {
+        console.error("Get expired donations error:", error);
+        return { statusCode: 500, body: JSON.stringify({ error: "Failed to fetch expired donations" }) };
+    }
+};
+
+export const getExpiredDonations = withRole(['DONOR', 'VOLUNTEER'], getExpiredDonationsHandler);
