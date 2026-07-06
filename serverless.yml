@@ -126,7 +126,7 @@ functions:
     handler: src/common/controller.getUserData
     events:
       - http:
-          path: api/users/{id}
+          path: api/users/profile
           method: get
           cors: true
           authorizer:
@@ -138,7 +138,7 @@ functions:
     handler: src/common/controller.updateUserData
     events:
       - http:
-          path: api/users/{id}
+          path: api/users/profile
           method: put
           cors: true
           authorizer:

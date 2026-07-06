@@ -44,10 +44,7 @@ export const verifyEmail = async (event: any) => {
 
 const getUserDataHandler = async (event: any) => {
     try {
-        const userId = event.pathParameters?.id;
-        if (!userId) {
-            return { statusCode: 400, body: JSON.stringify({ error: "User ID is required" }) };
-        }
+        const userId = event.user.userId;
 
         const item = await getUserDataRecord(userId);
 
@@ -92,13 +89,7 @@ export const getExpiredDonations = withRole(['DONOR', 'VOLUNTEER'], getExpiredDo
 
 const updateUserDataHandler = async (event: any) => {
     try {
-        const userId = event.pathParameters?.id;
-        if (!userId) {
-            return { statusCode: 400, body: JSON.stringify({ error: "User ID is required" }) };
-        }
-        if (event.user.userId !== userId) {
-            return { statusCode: 403, body: JSON.stringify({ error: "Forbidden: You can only update your own profile" }) };
-        }
+        const userId = event.user.userId;
 
         let body;
         try {
