@@ -10,6 +10,6 @@ export const getSignedUploadUrl = async (key: string, contentType: string = "ima
 };
 
 export const getSignedDownloadUrl = async (key: string) => {
-    const command = new GetObjectCommand({ Bucket: BUCKET_NAME, Key: key });
+    const command = new GetObjectCommand({ Bucket: BUCKET_NAME, Key: key, ResponseContentType: "image/jpeg" });
     return await getSignedUrl(s3Client, command, { expiresIn: 3600 });
 };
