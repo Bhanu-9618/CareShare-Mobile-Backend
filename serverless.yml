@@ -396,9 +396,7 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL 
-        TimeToLiveSpecification:
-          AttributeName: expiryAt
-          Enabled: true
+
         BillingMode: PAY_PER_REQUEST
 
     CognitoUserPool:

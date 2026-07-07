@@ -4,8 +4,8 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 const s3Client = new S3Client({ region: process.env.AWS_REGION || "ap-southeast-1" });
 const BUCKET_NAME = process.env.IMAGES_BUCKET || "careshare-donation-images-dev";
 
-export const getSignedUploadUrl = async (key: string) => {
-    const command = new PutObjectCommand({ Bucket: BUCKET_NAME, Key: key });
+export const getSignedUploadUrl = async (key: string, contentType: string = "image/jpeg") => {
+    const command = new PutObjectCommand({ Bucket: BUCKET_NAME, Key: key, ContentType: contentType });
     return await getSignedUrl(s3Client, command, { expiresIn: 300 });
 };
 

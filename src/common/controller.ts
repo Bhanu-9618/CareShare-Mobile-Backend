@@ -1,7 +1,6 @@
 import { getSignedUploadUrl } from "../lib/s3";
 import { v4 as uuidv4 } from "uuid";
-import * as crypto from "crypto";
-(global as any).crypto = crypto;
+
 import { ConfirmSignUpCommand } from "@aws-sdk/client-cognito-identity-provider";
 import { cognitoClient as cognito } from "../lib/cognito";
 import { withRole } from './middleware';
@@ -10,8 +9,9 @@ import { getUserDataRecord, getExpiredDonationsRecords, updateUserDataRecord, ge
 
 export const getUploadUrl = async (event: any) => {
     const filename = event.queryStringParameters?.filename || "image.jpg";
+    const contentType = event.queryStringParameters?.contentType || "image/jpeg";
     const key = `donations/${uuidv4()}-${filename}`;
-    const url = await getSignedUploadUrl(key);
+    const url = await getSignedUploadUrl(key, contentType);
     
     return {
         statusCode: 200,

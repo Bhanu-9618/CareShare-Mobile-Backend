@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import * as crypto from 'crypto';
-(global as any).crypto = crypto;
+
 import { createDonationRecord, getDonationsExcludeStatuses } from './service';
 import { attachImageUrls } from "../lib/imageProcessor";
 import { withRole } from '../common/middleware';
