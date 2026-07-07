@@ -3,7 +3,7 @@ useDotenv: true
 
 provider:
   name: aws
-  runtime: nodejs18.x
+  runtime: nodejs22.x
   region: ap-southeast-1
   endpointType: REGIONAL
   stage: ${opt:stage, 'dev'}
