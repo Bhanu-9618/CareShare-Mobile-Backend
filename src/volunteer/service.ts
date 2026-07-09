@@ -180,4 +180,25 @@ export const completeDonationRecord = async (donationId: string, volunteerId: st
     const result = await docClient.send(new UpdateCommand(params));
     return result.Attributes;
 };
+
+export const unclaimDonationRecord = async (donationId: string, volunteerId: string) => {
+    const params = {
+        TableName: TABLE_NAME,
+        Key: { donationId },
+        UpdateExpression: "SET #status = :newStatus REMOVE volunteerId, volunteerName",
+        ConditionExpression: "volunteerId = :vid AND #status = :expectedStatus",
+        ExpressionAttributeNames: {
+            "#status": "status"
+        },
+        ExpressionAttributeValues: {
+            ":newStatus": DonationStatus.ACTIVE,
+            ":vid": volunteerId,
+            ":expectedStatus": DonationStatus.ACCEPTED
+        },
+        ReturnValues: "ALL_NEW" as const
+    };
+
+    const result = await docClient.send(new UpdateCommand(params));
+    return result.Attributes;
+};
 

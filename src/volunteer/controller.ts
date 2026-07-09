@@ -8,7 +8,8 @@ import {
     confirmDonationRequestRecord,
     cancelReceiverRequestRecord,
     getDonationById,
-    completeDonationRecord
+    completeDonationRecord,
+    unclaimDonationRecord
 } from './service';
 import { attachImageUrls } from "../lib/imageProcessor";
 import { withRole } from '../common/middleware';
@@ -188,4 +189,32 @@ const deliverDonationHandler = async (event: any) => {
 };
 
 export const deliverDonation = withRole(['VOLUNTEER'], deliverDonationHandler);
-
+
+const unclaimDonationHandler = async (event: any) => {
+    try {
+        const volunteerId = event.user.userId;
+        const donationId = event.pathParameters?.id;
+        if (!donationId) return { statusCode: 400, body: JSON.stringify({ error: "Donation ID is required" }) };
+
+        const updatedDonation = await unclaimDonationRecord(donationId, volunteerId);
+        
+        return {
+            statusCode: 200,
+            body: JSON.stringify({ 
+                message: "Donation unclaimed successfully! It is now back in the public feed.", 
+                donation: updatedDonation 
+            })
+        };
+    } catch (error: any) {
+        if (error.name === "ConditionalCheckFailedException") {
+            return {
+                statusCode: 400,
+                body: JSON.stringify({ message: "You can only unclaim a donation that you have claimed and not yet picked up." })
+            };
+        }
+        console.error(error);
+        return { statusCode: 500, body: JSON.stringify({ error: "Failed to unclaim donation" }) };
+    }
+};
+
+export const unclaimDonation = withRole(['VOLUNTEER'], unclaimDonationHandler);
