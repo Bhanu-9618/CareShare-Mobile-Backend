@@ -25,13 +25,14 @@ export const getOngoingTasksCount = async (volunteerId: string) => {
         TableName: TABLE_NAME,
         IndexName: "VolunteerIndex",
         KeyConditionExpression: "volunteerId = :vid",
-        FilterExpression: "#status = :status",
+        FilterExpression: "#status <> :completed AND #status <> :expired",
         ExpressionAttributeNames: {
             "#status": "status"
         },
         ExpressionAttributeValues: {
             ":vid": volunteerId,
-            ":status": DonationStatus.ACCEPTED
+            ":completed": DonationStatus.COMPLETED,
+            ":expired": DonationStatus.EXPIRED
         }
     };
     const result = await docClient.send(new QueryCommand(params));
