@@ -7,11 +7,13 @@ import { DonationStatus } from "../common/types";
 
 const createDonationHandler = async (event: any) => { 
   const donorId = event.user.userId; 
+  const donorName = event.user.name;
   const { foodName, quantity, location, expiryTime, imageKey } = JSON.parse(event.body);
   const expiryTimestamp = Math.floor(new Date(expiryTime).getTime() / 1000);
   const newDonation = {
     donationId: uuidv4(),
     donorId,
+    donorName,
     foodName,
     quantity,
     location,

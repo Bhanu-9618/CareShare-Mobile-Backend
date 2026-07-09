@@ -29,6 +29,7 @@ export const getVolunteerFeed = withRole(['VOLUNTEER'], getVolunteerFeedHandler)
 const claimDonationHandler = async (event: any) => {
     try {
         const volunteerId = event.user.userId;
+        const volunteerName = event.user.name;
         const donationId = event.pathParameters?.id;
         if (!donationId) return { statusCode: 400, body: JSON.stringify({ error: "Donation ID is required" }) };
 
@@ -39,7 +40,7 @@ const claimDonationHandler = async (event: any) => {
                 body: JSON.stringify({ message: "You have reached the maximum limit of 5 ongoing tasks." })
             };
         }
-        const updatedDonation = await claimDonationRecord(donationId, volunteerId);
+        const updatedDonation = await claimDonationRecord(donationId, volunteerId, volunteerName);
         
         return {
             statusCode: 200,

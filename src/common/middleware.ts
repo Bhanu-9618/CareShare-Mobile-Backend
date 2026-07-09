@@ -22,7 +22,9 @@ export const withRole = (allowedRoles: string[], handler: Function) => {
             event.user = {
                 email: claims.email,
                 role: userRole,
-                userId: claims.sub 
+                userId: claims.sub,
+                name: claims.name,
+                address: claims.address
             };
 
             return await handler(event, context);

@@ -18,11 +18,13 @@ export const getLiveFeed = withRole(['RECEIVER'], getLiveFeedHandler);
 const requestDonationHandler = async (event: any) => {
     try {
         const receiverId = event.user.userId;
+        const receiverName = event.user.name;
+        const receiverAddress = event.user.address;
         const donationId = event.pathParameters?.id;
 
         if (!donationId) return { statusCode: 400, body: JSON.stringify({ error: "Donation ID is required" }) };
 
-        const updated = await requestDonationRecord(donationId, receiverId);
+        const updated = await requestDonationRecord(donationId, receiverId, receiverName, receiverAddress);
         return { statusCode: 200, body: JSON.stringify({ message: "Food requested successfully!", donation: updated }) };
     } catch (error: any) {
         

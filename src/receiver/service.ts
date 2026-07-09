@@ -44,16 +44,18 @@ export const expireOldDonationsRecords = async (currentTimestamp: number) => {
     return expiredItems.length;
 };
 
-export const requestDonationRecord = async (donationId: string, receiverId: string) => {
+export const requestDonationRecord = async (donationId: string, receiverId: string, receiverName: string, receiverAddress: string) => {
     const params = {
         TableName: TABLE_NAME,
         Key: { donationId },
-        UpdateExpression: "SET #status = :newStatus, receiverId = :rid",
+        UpdateExpression: "SET #status = :newStatus, receiverId = :rid, receiverName = :rname, receiverAddress = :raddress",
         ConditionExpression: "#status = :expectedStatus",
         ExpressionAttributeNames: { "#status": "status" },
         ExpressionAttributeValues: { 
             ":newStatus": DonationStatus.REQUESTED, 
             ":rid": receiverId,
+            ":rname": receiverName,
+            ":raddress": receiverAddress,
             ":expectedStatus": DonationStatus.LIVE 
         },
         ReturnValues: "ALL_NEW" as const

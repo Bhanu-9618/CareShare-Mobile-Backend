@@ -38,11 +38,11 @@ export const getOngoingTasksCount = async (volunteerId: string) => {
     return result.Items?.length || 0;
 };
 
-export const claimDonationRecord = async (donationId: string, volunteerId: string) => {
+export const claimDonationRecord = async (donationId: string, volunteerId: string, volunteerName: string) => {
     const params = {
         TableName: TABLE_NAME,
         Key: { donationId },
-        UpdateExpression: "SET #status = :newStatus, volunteerId = :vid",
+        UpdateExpression: "SET #status = :newStatus, volunteerId = :vid, volunteerName = :vname",
         ConditionExpression: "attribute_exists(donationId) AND #status = :expectedStatus",
         ExpressionAttributeNames: {
             "#status": "status"
@@ -50,6 +50,7 @@ export const claimDonationRecord = async (donationId: string, volunteerId: strin
         ExpressionAttributeValues: {
             ":newStatus": DonationStatus.ACCEPTED,
             ":vid": volunteerId,
+            ":vname": volunteerName,
             ":expectedStatus": DonationStatus.ACTIVE
         },
         ReturnValues: "ALL_NEW" as const
