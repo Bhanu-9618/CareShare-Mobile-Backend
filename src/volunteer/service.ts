@@ -140,7 +140,7 @@ export const cancelReceiverRequestRecord = async (donationId: string, volunteerI
     const params = {
         TableName: TABLE_NAME,
         Key: { donationId },
-        UpdateExpression: "SET #status = :newStatus REMOVE receiverId",
+        UpdateExpression: "SET #status = :newStatus REMOVE receiverId, receiverName, receiverAddress",
         ConditionExpression: "volunteerId = :vid AND #status = :expectedStatus",
         ExpressionAttributeNames: { "#status": "status" },
         ExpressionAttributeValues: {
