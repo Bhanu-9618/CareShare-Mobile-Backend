@@ -1,7 +1,7 @@
 import { getSignedUploadUrl } from "../lib/s3";
 import { v4 as uuidv4 } from "uuid";
 
-import { ConfirmSignUpCommand } from "@aws-sdk/client-cognito-identity-provider";
+import { ConfirmSignUpCommand, AdminUpdateUserAttributesCommand } from "@aws-sdk/client-cognito-identity-provider";
 import { cognitoClient as cognito } from "../lib/cognito";
 import { withRole } from './middleware';
 import { attachImageUrls } from "../lib/imageProcessor";
@@ -122,6 +122,19 @@ const updateUserDataHandler = async (event: any) => {
 
         const updatedUser = await updateUserDataRecord(userId, updateExpression, expressionAttributeNames, expressionAttributeValues) || {};
         
+        // Sync the changes up to Cognito so the next JWT token has the new details
+        const userAttributes = [];
+        if (name) userAttributes.push({ Name: "name", Value: name });
+        if (address) userAttributes.push({ Name: "address", Value: address });
+
+        if (userAttributes.length > 0) {
+            await cognito.send(new AdminUpdateUserAttributesCommand({
+                UserPoolId: process.env.USER_POOL_ID!,
+                Username: event.user.email,
+                UserAttributes: userAttributes
+            }));
+        }
+
         return {
             statusCode: 200,
             body: JSON.stringify({ 
